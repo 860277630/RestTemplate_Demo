@@ -38,10 +38,16 @@ public class TestController {
         return u;
     }
 
+
     //get请求方式1
     @GetMapping("/getUrl1/{id}")
     public String getUrl(@PathVariable("id")String id){
         System.out.println("=============getUrl=================");
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return "输入的ID：为"+id;
     }
 
