@@ -1,6 +1,10 @@
 package com.example.demo.Controller;
 
 
+import com.example.demo.model.ChatMessage;
+import com.example.demo.model.ChatRequestParameter;
+import com.example.demo.model.ChatResponseParameter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -139,6 +143,56 @@ public class RestTestController {
         ResponseEntity<User> response = restTemplate.exchange(url, HttpMethod.POST,requestEntity,User.class);
         log.info(response.toString());
         log.info(response.getBody().toString());
+        return "finish";
+    }
+
+    //restTemplate  添加代理  以访问  google网站为例
+    @RequestMapping("/proxy")
+    public String proxyNoParams(){
+
+        //百度不需要  代理（即翻墙所以可以直接访问）
+        String url1 = "http://www.baidu.com";
+        ResponseEntity<String> forEntity = restTemplate.getForEntity(url1, String.class);
+        System.out.println(forEntity.toString());
+        String object = restTemplate.getForObject(url1, String.class);
+        System.out.println(object);
+        String s = restTemplate.postForObject(url1, null, String.class);
+        System.out.println(s);
+        ResponseEntity<String> entity = restTemplate.postForEntity(url1, null, String.class);
+        System.out.println(entity.toString());
+
+        //  谷歌需要代理   谷歌接口  不允许post访问
+        String url2 = "http://www.google.com";
+
+        ResponseEntity<String> forEntity2 = restTemplate.getForEntity(url2, String.class);
+        System.out.println(forEntity2.toString());
+        String object2 = restTemplate.getForObject(url2, String.class);
+        System.out.println(object2);
+
+
+        // 然后我们访问  需要认证的 openai接口  同样是外网
+        // 因为 restTemplate  在注入的时候就 使用了代理 所以这里正常写就可以
+        // 如果是new的方式则需要  初始化
+        // 关于openai的 密钥申请连接参考：https://www.bilibili.com/video/BV1iM4y1D7HW/?spm_id_from=333.337.search-card.all.click&vd_source=97411b9a8288d7869f5363f72b0d7613
+
+        String url3 = "https://api.openai.com/v1/chat/completions";
+        //申明一个请求头
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization","Bearer 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");
+        // 然后进行raw形式的 申请方式
+        ObjectMapper objectMapper = new ObjectMapper();
+        ChatRequestParameter parameter = new ChatRequestParameter();
+        parameter.addMessages(new ChatMessage("user","你好"));
+        String valueAsString = null;
+        try {
+            valueAsString = objectMapper.writeValueAsString(parameter);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        HttpEntity<String> entityParam = new HttpEntity<>(valueAsString,headers);
+        ChatResponseParameter response = restTemplate.postForObject(url3, entityParam, ChatResponseParameter.class);
+        System.out.println(response.toString());
         return "finish";
     }
 
